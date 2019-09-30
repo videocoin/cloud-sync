@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	ServiceName string = "sync"
+	ServiceName string = "syncer"
 	Version     string = "dev"
 )
 

@@ -82,7 +82,11 @@ func (s *RpcServer) Sync(stream v1.SyncerService_SyncServer) error {
 
 		if meta := in.GetMeta(); meta != nil {
 			ws = s.writer.NewSession(stream.Context(), meta.Path)
-			defer ws.Close(true)
+			defer func() {
+				if err := ws.Close(true); err != nil {
+					s.logger.Errorf(err.Error())
+				}
+			}()
 		}
 
 		if data := in.GetData(); data != nil {
@@ -93,8 +97,7 @@ func (s *RpcServer) Sync(stream v1.SyncerService_SyncServer) error {
 				return err
 			}
 
-			err := ws.Write(bytes.NewReader(data))
-			if err != nil {
+			if err := ws.Write(bytes.NewReader(data)); err != nil {
 				err := fmt.Errorf("failed to write: %s", err.Error())
 				s.logger.Errorf(err.Error())
 

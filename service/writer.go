@@ -14,7 +14,8 @@ type WriterOptions struct {
 }
 
 type Writer struct {
-	bh *storage.BucketHandle
+	bh     *storage.BucketHandle
+	logger *logrus.Entry
 }
 
 func NewWriter(wo *WriterOptions) (*Writer, error) {
@@ -30,11 +31,13 @@ func NewWriter(wo *WriterOptions) (*Writer, error) {
 	}
 
 	return &Writer{
-		bh: bh,
+		bh:     bh,
+		logger: wo.Logger,
 	}, nil
 }
 
 func (w *Writer) NewSession(ctx context.Context, name string) *WriteSession {
+	w.logger.Infof("new write session to path: %s", name)
 	return NewWriteSession(ctx, w.bh.Object(name))
 }
 
