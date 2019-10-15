@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"io"
 	"net"
 
 	protoempty "github.com/gogo/protobuf/types"
@@ -32,7 +31,7 @@ type RpcServer struct {
 
 func NewRpcServer(opts *RpcServerOptions) (*RpcServer, error) {
 	grpcOpts := grpcutil.DefaultServerOpts(opts.Logger)
-	grpcOpts = append(grpcOpts, grpc.MaxRecvMsgSize(1024*1024*10))
+	grpcOpts = append(grpcOpts, grpc.MaxRecvMsgSize(1024*1024*1024))
 
 	grpcServer := grpc.NewServer(grpcOpts...)
 
@@ -64,49 +63,32 @@ func (s *RpcServer) Health(ctx context.Context, req *protoempty.Empty) (*rpc.Hea
 	return &rpc.HealthStatus{Status: "OK"}, nil
 }
 
-func (s *RpcServer) Sync(stream v1.SyncerService_SyncServer) error {
-	var ws *WriteSession
-	for {
-		in, err := stream.Recv()
-		if err != nil {
-			if err == io.EOF {
-				s.logger.Infof("reached eof")
-				break
-			}
+func (s *RpcServer) Sync(ctx context.Context, req *v1.SyncRequest) (*protoempty.Empty, error) {
+	ws := s.writer.NewSession(context.Background(), req.Path, req.ContentType)
 
-			err := fmt.Errorf("failed to sync file: %s", err.Error())
+	if data := req.GetData(); data != nil {
+		if ws == nil {
+			err := fmt.Errorf("failed to start write session")
 			s.logger.Errorf(err.Error())
 
-			return err
+			return nil, err
 		}
 
-		if meta := in.GetMeta(); meta != nil {
-			ws = s.writer.NewSession(stream.Context(), meta.Path)
+		go func() {
 			defer func() {
 				if err := ws.Close(true); err != nil {
-					s.logger.Errorf(err.Error())
+					s.logger.Errorf("failed to close: %s", err)
 				}
 			}()
-		}
-
-		if data := in.GetData(); data != nil {
-			if ws == nil {
-				err := fmt.Errorf("failed to start write session")
-				s.logger.Errorf(err.Error())
-
-				return err
-			}
 
 			if err := ws.Write(bytes.NewReader(data)); err != nil {
 				err := fmt.Errorf("failed to write: %s", err.Error())
 				s.logger.Errorf(err.Error())
-
-				return err
 			}
-		}
+
+			s.logger.WithField("path", req.Path).Infof("successfully synced file")
+		}()
 	}
 
-	s.logger.Infof("successfully synced file")
-
-	return stream.SendAndClose(&protoempty.Empty{})
+	return &protoempty.Empty{}, nil
 }

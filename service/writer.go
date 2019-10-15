@@ -36,9 +36,9 @@ func NewWriter(wo *WriterOptions) (*Writer, error) {
 	}, nil
 }
 
-func (w *Writer) NewSession(ctx context.Context, name string) *WriteSession {
+func (w *Writer) NewSession(ctx context.Context, name, ct string) *WriteSession {
 	w.logger.Infof("new write session to path: %s", name)
-	return NewWriteSession(ctx, w.bh.Object(name))
+	return NewWriteSession(ctx, w.bh.Object(name), ct)
 }
 
 type WriteSession struct {
@@ -47,8 +47,13 @@ type WriteSession struct {
 	w   *storage.Writer
 }
 
-func NewWriteSession(ctx context.Context, oh *storage.ObjectHandle) *WriteSession {
+func NewWriteSession(
+	ctx context.Context,
+	oh *storage.ObjectHandle,
+	ct string,
+) *WriteSession {
 	w := oh.NewWriter(ctx)
+	w.ContentType = ct
 	return &WriteSession{
 		ctx: ctx,
 		hdl: oh,
