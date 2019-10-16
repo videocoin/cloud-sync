@@ -32,72 +32,20 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion2 // please upgrade the proto package
 
-type Metadata struct {
-	Path                 string   `protobuf:"bytes,1,opt,name=path,proto3" json:"path,omitempty"`
+type SyncRequest struct {
+	Data                 []byte   `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	Path                 string   `protobuf:"bytes,2,opt,name=path,proto3" json:"path,omitempty"`
+	ContentType          string   `protobuf:"bytes,3,opt,name=content_type,json=contentType,proto3" json:"content_type,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Metadata) Reset()         { *m = Metadata{} }
-func (m *Metadata) String() string { return proto.CompactTextString(m) }
-func (*Metadata) ProtoMessage()    {}
-func (*Metadata) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e555e157b8570a45, []int{0}
-}
-func (m *Metadata) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *Metadata) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_Metadata.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalTo(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *Metadata) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Metadata.Merge(m, src)
-}
-func (m *Metadata) XXX_Size() int {
-	return m.Size()
-}
-func (m *Metadata) XXX_DiscardUnknown() {
-	xxx_messageInfo_Metadata.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Metadata proto.InternalMessageInfo
-
-func (m *Metadata) GetPath() string {
-	if m != nil {
-		return m.Path
-	}
-	return ""
-}
-
-func (*Metadata) XXX_MessageName() string {
-	return "cloud.api.syncer.v1.Metadata"
-}
-
-type SyncRequest struct {
-	// Types that are valid to be assigned to SyncOneof:
-	//	*SyncRequest_Data
-	//	*SyncRequest_Meta
-	SyncOneof            isSyncRequest_SyncOneof `protobuf_oneof:"sync_oneof"`
-	XXX_NoUnkeyedLiteral struct{}                `json:"-"`
-	XXX_unrecognized     []byte                  `json:"-"`
-	XXX_sizecache        int32                   `json:"-"`
 }
 
 func (m *SyncRequest) Reset()         { *m = SyncRequest{} }
 func (m *SyncRequest) String() string { return proto.CompactTextString(m) }
 func (*SyncRequest) ProtoMessage()    {}
 func (*SyncRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e555e157b8570a45, []int{1}
+	return fileDescriptor_e555e157b8570a45, []int{0}
 }
 func (m *SyncRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -126,119 +74,31 @@ func (m *SyncRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SyncRequest proto.InternalMessageInfo
 
-type isSyncRequest_SyncOneof interface {
-	isSyncRequest_SyncOneof()
-	MarshalTo([]byte) (int, error)
-	Size() int
-}
-
-type SyncRequest_Data struct {
-	Data []byte `protobuf:"bytes,1,opt,name=data,proto3,oneof"`
-}
-type SyncRequest_Meta struct {
-	Meta *Metadata `protobuf:"bytes,2,opt,name=meta,proto3,oneof"`
-}
-
-func (*SyncRequest_Data) isSyncRequest_SyncOneof() {}
-func (*SyncRequest_Meta) isSyncRequest_SyncOneof() {}
-
-func (m *SyncRequest) GetSyncOneof() isSyncRequest_SyncOneof {
-	if m != nil {
-		return m.SyncOneof
-	}
-	return nil
-}
-
 func (m *SyncRequest) GetData() []byte {
-	if x, ok := m.GetSyncOneof().(*SyncRequest_Data); ok {
-		return x.Data
+	if m != nil {
+		return m.Data
 	}
 	return nil
 }
 
-func (m *SyncRequest) GetMeta() *Metadata {
-	if x, ok := m.GetSyncOneof().(*SyncRequest_Meta); ok {
-		return x.Meta
+func (m *SyncRequest) GetPath() string {
+	if m != nil {
+		return m.Path
 	}
-	return nil
+	return ""
 }
 
-// XXX_OneofFuncs is for the internal use of the proto package.
-func (*SyncRequest) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _SyncRequest_OneofMarshaler, _SyncRequest_OneofUnmarshaler, _SyncRequest_OneofSizer, []interface{}{
-		(*SyncRequest_Data)(nil),
-		(*SyncRequest_Meta)(nil),
+func (m *SyncRequest) GetContentType() string {
+	if m != nil {
+		return m.ContentType
 	}
-}
-
-func _SyncRequest_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*SyncRequest)
-	// sync_oneof
-	switch x := m.SyncOneof.(type) {
-	case *SyncRequest_Data:
-		_ = b.EncodeVarint(1<<3 | proto.WireBytes)
-		_ = b.EncodeRawBytes(x.Data)
-	case *SyncRequest_Meta:
-		_ = b.EncodeVarint(2<<3 | proto.WireBytes)
-		if err := b.EncodeMessage(x.Meta); err != nil {
-			return err
-		}
-	case nil:
-	default:
-		return fmt.Errorf("SyncRequest.SyncOneof has unexpected type %T", x)
-	}
-	return nil
-}
-
-func _SyncRequest_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*SyncRequest)
-	switch tag {
-	case 1: // sync_oneof.data
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		x, err := b.DecodeRawBytes(true)
-		m.SyncOneof = &SyncRequest_Data{x}
-		return true, err
-	case 2: // sync_oneof.meta
-		if wire != proto.WireBytes {
-			return true, proto.ErrInternalBadWireType
-		}
-		msg := new(Metadata)
-		err := b.DecodeMessage(msg)
-		m.SyncOneof = &SyncRequest_Meta{msg}
-		return true, err
-	default:
-		return false, nil
-	}
-}
-
-func _SyncRequest_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*SyncRequest)
-	// sync_oneof
-	switch x := m.SyncOneof.(type) {
-	case *SyncRequest_Data:
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(len(x.Data)))
-		n += len(x.Data)
-	case *SyncRequest_Meta:
-		s := proto.Size(x.Meta)
-		n += 1 // tag and wire
-		n += proto.SizeVarint(uint64(s))
-		n += s
-	case nil:
-	default:
-		panic(fmt.Sprintf("proto: unexpected type %T in oneof", x))
-	}
-	return n
+	return ""
 }
 
 func (*SyncRequest) XXX_MessageName() string {
 	return "cloud.api.syncer.v1.SyncRequest"
 }
 func init() {
-	proto.RegisterType((*Metadata)(nil), "cloud.api.syncer.v1.Metadata")
-	golang_proto.RegisterType((*Metadata)(nil), "cloud.api.syncer.v1.Metadata")
 	proto.RegisterType((*SyncRequest)(nil), "cloud.api.syncer.v1.SyncRequest")
 	golang_proto.RegisterType((*SyncRequest)(nil), "cloud.api.syncer.v1.SyncRequest")
 }
@@ -249,30 +109,29 @@ func init() {
 }
 
 var fileDescriptor_e555e157b8570a45 = []byte{
-	// 362 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x90, 0xc1, 0x6a, 0xea, 0x40,
-	0x14, 0x86, 0x1d, 0x09, 0xe2, 0x1d, 0xbd, 0x70, 0x99, 0x5b, 0x8a, 0xc4, 0x36, 0x48, 0x56, 0x6e,
-	0x9c, 0x41, 0x7d, 0x03, 0x69, 0xc1, 0x4d, 0x29, 0x98, 0x5d, 0x37, 0x32, 0x8e, 0x63, 0x12, 0xd0,
-	0x9c, 0x34, 0x99, 0x04, 0xec, 0xb2, 0xaf, 0xd0, 0x77, 0xe8, 0x73, 0x74, 0xe9, 0xb2, 0xd0, 0x17,
-	0x28, 0xda, 0x07, 0x29, 0x33, 0x13, 0xa9, 0x0b, 0xbb, 0x3b, 0x87, 0xff, 0x3b, 0xe7, 0x3f, 0xe7,
-	0xc7, 0x5e, 0xbe, 0x4d, 0x84, 0xcc, 0x58, 0x39, 0x64, 0xb6, 0x9a, 0xe7, 0x32, 0x2b, 0x63, 0x21,
-	0x69, 0x9a, 0x81, 0x02, 0xf2, 0x5f, 0xac, 0xa1, 0x58, 0x52, 0x9e, 0xc6, 0xd4, 0xea, 0xb4, 0x1c,
-	0xba, 0xdd, 0x10, 0x20, 0x5c, 0x4b, 0x66, 0x90, 0x45, 0xb1, 0x62, 0x72, 0x93, 0xaa, 0xad, 0x9d,
-	0x70, 0xaf, 0x2a, 0x91, 0xa7, 0x31, 0xe3, 0x49, 0x02, 0x8a, 0xab, 0x18, 0x92, 0xbc, 0x52, 0x07,
-	0x61, 0xac, 0xa2, 0x62, 0x41, 0x05, 0x6c, 0x58, 0x08, 0x21, 0xfc, 0xec, 0xd0, 0x9d, 0x69, 0x4c,
-	0x55, 0xe1, 0xec, 0x04, 0x2f, 0xe3, 0xa5, 0x04, 0x01, 0x71, 0xc2, 0xcc, 0x4d, 0x03, 0x6d, 0x90,
-	0xa5, 0x82, 0x45, 0x92, 0xaf, 0x55, 0x64, 0x07, 0x7c, 0x0f, 0x37, 0xef, 0xa4, 0xe2, 0x4b, 0xae,
-	0x38, 0x21, 0xd8, 0x49, 0xb9, 0x8a, 0x3a, 0xa8, 0x87, 0xfa, 0x7f, 0x66, 0xa6, 0xf6, 0x57, 0xb8,
-	0x15, 0x6c, 0x13, 0x31, 0x93, 0x8f, 0x85, 0xcc, 0x15, 0xb9, 0xc0, 0x8e, 0x46, 0x0d, 0xd2, 0x9e,
-	0xd6, 0x66, 0xa6, 0x23, 0x63, 0xec, 0x6c, 0xa4, 0xe2, 0x9d, 0x7a, 0x0f, 0xf5, 0x5b, 0xa3, 0x6b,
-	0x7a, 0x26, 0x03, 0x7a, 0x74, 0xd1, 0x43, 0x1a, 0x9e, 0xb4, 0x31, 0xd6, 0xea, 0x1c, 0x12, 0x09,
-	0xab, 0xd1, 0x2b, 0xc2, 0x7f, 0x03, 0x03, 0x07, 0x36, 0x4f, 0x72, 0x8f, 0x1b, 0x53, 0x73, 0x29,
-	0xb9, 0xa4, 0x36, 0x22, 0x7a, 0xfc, 0x9d, 0xde, 0xea, 0xfc, 0xdc, 0xee, 0x89, 0x51, 0x96, 0x0a,
-	0x6a, 0xf1, 0x40, 0x71, 0x55, 0xe4, 0xfe, 0xbf, 0xe7, 0x8f, 0xaf, 0x97, 0x3a, 0x26, 0xcd, 0xea,
-	0xdf, 0x27, 0x72, 0x83, 0x1d, 0xed, 0x40, 0x7a, 0x67, 0xef, 0x3b, 0xf9, 0xd2, 0xfd, 0xc5, 0xd0,
-	0xaf, 0xf5, 0xd1, 0xa4, 0xb3, 0xdb, 0x7b, 0xe8, 0x7d, 0xef, 0xa1, 0xcf, 0xbd, 0x87, 0xde, 0x0e,
-	0x1e, 0xda, 0x1d, 0x3c, 0xf4, 0x50, 0x2f, 0x87, 0x8b, 0x86, 0xa1, 0xc7, 0xdf, 0x01, 0x00, 0x00,
-	0xff, 0xff, 0xfa, 0x1c, 0xe7, 0xdd, 0x23, 0x02, 0x00, 0x00,
+	// 344 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x74, 0x50, 0xc1, 0x4a, 0x2b, 0x31,
+	0x14, 0x7d, 0xe9, 0x2b, 0xe5, 0xbd, 0xb4, 0x0f, 0x1e, 0x11, 0x64, 0x98, 0xca, 0x50, 0xbb, 0xea,
+	0xa6, 0x09, 0xd5, 0x3f, 0x28, 0x08, 0xee, 0x84, 0x8e, 0x0b, 0x71, 0x53, 0xd2, 0x34, 0xce, 0x04,
+	0xda, 0x24, 0xce, 0xdc, 0x19, 0x18, 0x97, 0xfe, 0x82, 0xbf, 0xe0, 0x87, 0xb8, 0xec, 0x52, 0xf0,
+	0x07, 0xa4, 0xf5, 0x43, 0x64, 0x92, 0x91, 0x76, 0xa1, 0xbb, 0x73, 0xef, 0x39, 0x37, 0x27, 0xe7,
+	0xe0, 0x28, 0xaf, 0xb4, 0x90, 0x19, 0x2b, 0x27, 0xcc, 0xa3, 0x79, 0x2e, 0xb3, 0x52, 0x09, 0x49,
+	0x6d, 0x66, 0xc0, 0x90, 0x23, 0xb1, 0x32, 0xc5, 0x92, 0x72, 0xab, 0xa8, 0xe7, 0x69, 0x39, 0x09,
+	0xfb, 0x89, 0x31, 0xc9, 0x4a, 0x32, 0x27, 0x59, 0x14, 0x77, 0x4c, 0xae, 0x2d, 0x54, 0xfe, 0x22,
+	0x3c, 0x69, 0x48, 0x6e, 0x15, 0xe3, 0x5a, 0x1b, 0xe0, 0xa0, 0x8c, 0xce, 0x1b, 0x76, 0x9c, 0x28,
+	0x48, 0x8b, 0x05, 0x15, 0x66, 0xcd, 0x12, 0x93, 0x98, 0xfd, 0x1b, 0xf5, 0xe4, 0x06, 0x87, 0x1a,
+	0x39, 0x3b, 0x90, 0x97, 0x6a, 0x29, 0x8d, 0x30, 0x4a, 0x33, 0xf7, 0xa7, 0x71, 0x6d, 0x90, 0x59,
+	0xc1, 0x52, 0xc9, 0x57, 0x90, 0xfa, 0x83, 0xe1, 0x0d, 0xee, 0xc6, 0x95, 0x16, 0x33, 0x79, 0x5f,
+	0xc8, 0x1c, 0x08, 0xc1, 0xed, 0x25, 0x07, 0x1e, 0xa0, 0x01, 0x1a, 0xf5, 0x66, 0x0e, 0xd7, 0x3b,
+	0xcb, 0x21, 0x0d, 0x5a, 0x03, 0x34, 0xfa, 0x3b, 0x73, 0x98, 0x9c, 0xe2, 0x9e, 0x30, 0x1a, 0xa4,
+	0x86, 0x39, 0x54, 0x56, 0x06, 0xbf, 0x1d, 0xd7, 0x6d, 0x76, 0xd7, 0x95, 0x95, 0x67, 0xcf, 0x08,
+	0xff, 0x8b, 0x5d, 0x05, 0xb1, 0x6f, 0x88, 0x5c, 0xe1, 0xce, 0xa5, 0xf3, 0x26, 0xc7, 0xd4, 0x87,
+	0xa6, 0x5f, 0x69, 0xe8, 0x45, 0xdd, 0x48, 0xd8, 0xa7, 0xfb, 0xfa, 0x32, 0x2b, 0xa8, 0x97, 0xc7,
+	0xc0, 0xa1, 0xc8, 0x87, 0xff, 0x1f, 0xdf, 0x3e, 0x9e, 0x5a, 0x98, 0xfc, 0x69, 0x12, 0x3c, 0x90,
+	0x29, 0x6e, 0xd7, 0x0e, 0x64, 0x40, 0xbf, 0x69, 0x9d, 0x1e, 0xe4, 0x0a, 0x7f, 0x30, 0x1c, 0xfe,
+	0x9a, 0x06, 0x9b, 0x6d, 0x84, 0x5e, 0xb7, 0x11, 0x7a, 0xdf, 0x46, 0xe8, 0x65, 0x17, 0xa1, 0xcd,
+	0x2e, 0x42, 0xb7, 0xad, 0x72, 0xb2, 0xe8, 0x38, 0xed, 0xf9, 0x67, 0x00, 0x00, 0x00, 0xff, 0xff,
+	0x95, 0x02, 0xc4, 0x84, 0xf3, 0x01, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -288,7 +147,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type SyncerServiceClient interface {
 	Health(ctx context.Context, in *types.Empty, opts ...grpc.CallOption) (*rpc.HealthStatus, error)
-	Sync(ctx context.Context, opts ...grpc.CallOption) (SyncerService_SyncClient, error)
+	Sync(ctx context.Context, in *SyncRequest, opts ...grpc.CallOption) (*types.Empty, error)
 }
 
 type syncerServiceClient struct {
@@ -308,44 +167,19 @@ func (c *syncerServiceClient) Health(ctx context.Context, in *types.Empty, opts 
 	return out, nil
 }
 
-func (c *syncerServiceClient) Sync(ctx context.Context, opts ...grpc.CallOption) (SyncerService_SyncClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_SyncerService_serviceDesc.Streams[0], "/cloud.api.syncer.v1.SyncerService/Sync", opts...)
+func (c *syncerServiceClient) Sync(ctx context.Context, in *SyncRequest, opts ...grpc.CallOption) (*types.Empty, error) {
+	out := new(types.Empty)
+	err := c.cc.Invoke(ctx, "/cloud.api.syncer.v1.SyncerService/Sync", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &syncerServiceSyncClient{stream}
-	return x, nil
-}
-
-type SyncerService_SyncClient interface {
-	Send(*SyncRequest) error
-	CloseAndRecv() (*types.Empty, error)
-	grpc.ClientStream
-}
-
-type syncerServiceSyncClient struct {
-	grpc.ClientStream
-}
-
-func (x *syncerServiceSyncClient) Send(m *SyncRequest) error {
-	return x.ClientStream.SendMsg(m)
-}
-
-func (x *syncerServiceSyncClient) CloseAndRecv() (*types.Empty, error) {
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	m := new(types.Empty)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 // SyncerServiceServer is the server API for SyncerService service.
 type SyncerServiceServer interface {
 	Health(context.Context, *types.Empty) (*rpc.HealthStatus, error)
-	Sync(SyncerService_SyncServer) error
+	Sync(context.Context, *SyncRequest) (*types.Empty, error)
 }
 
 // UnimplementedSyncerServiceServer can be embedded to have forward compatible implementations.
@@ -355,8 +189,8 @@ type UnimplementedSyncerServiceServer struct {
 func (*UnimplementedSyncerServiceServer) Health(ctx context.Context, req *types.Empty) (*rpc.HealthStatus, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Health not implemented")
 }
-func (*UnimplementedSyncerServiceServer) Sync(srv SyncerService_SyncServer) error {
-	return status.Errorf(codes.Unimplemented, "method Sync not implemented")
+func (*UnimplementedSyncerServiceServer) Sync(ctx context.Context, req *SyncRequest) (*types.Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Sync not implemented")
 }
 
 func RegisterSyncerServiceServer(s *grpc.Server, srv SyncerServiceServer) {
@@ -381,30 +215,22 @@ func _SyncerService_Health_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _SyncerService_Sync_Handler(srv interface{}, stream grpc.ServerStream) error {
-	return srv.(SyncerServiceServer).Sync(&syncerServiceSyncServer{stream})
-}
-
-type SyncerService_SyncServer interface {
-	SendAndClose(*types.Empty) error
-	Recv() (*SyncRequest, error)
-	grpc.ServerStream
-}
-
-type syncerServiceSyncServer struct {
-	grpc.ServerStream
-}
-
-func (x *syncerServiceSyncServer) SendAndClose(m *types.Empty) error {
-	return x.ServerStream.SendMsg(m)
-}
-
-func (x *syncerServiceSyncServer) Recv() (*SyncRequest, error) {
-	m := new(SyncRequest)
-	if err := x.ServerStream.RecvMsg(m); err != nil {
+func _SyncerService_Sync_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SyncRequest)
+	if err := dec(in); err != nil {
 		return nil, err
 	}
-	return m, nil
+	if interceptor == nil {
+		return srv.(SyncerServiceServer).Sync(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/cloud.api.syncer.v1.SyncerService/Sync",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SyncerServiceServer).Sync(ctx, req.(*SyncRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 var _SyncerService_serviceDesc = grpc.ServiceDesc{
@@ -415,42 +241,13 @@ var _SyncerService_serviceDesc = grpc.ServiceDesc{
 			MethodName: "Health",
 			Handler:    _SyncerService_Health_Handler,
 		},
-	},
-	Streams: []grpc.StreamDesc{
 		{
-			StreamName:    "Sync",
-			Handler:       _SyncerService_Sync_Handler,
-			ClientStreams: true,
+			MethodName: "Sync",
+			Handler:    _SyncerService_Sync_Handler,
 		},
 	},
+	Streams:  []grpc.StreamDesc{},
 	Metadata: "syncer/v1/syncer_service.proto",
-}
-
-func (m *Metadata) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalTo(dAtA)
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *Metadata) MarshalTo(dAtA []byte) (int, error) {
-	var i int
-	_ = i
-	var l int
-	_ = l
-	if len(m.Path) > 0 {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintSyncerService(dAtA, i, uint64(len(m.Path)))
-		i += copy(dAtA[i:], m.Path)
-	}
-	if m.XXX_unrecognized != nil {
-		i += copy(dAtA[i:], m.XXX_unrecognized)
-	}
-	return i, nil
 }
 
 func (m *SyncRequest) Marshal() (dAtA []byte, err error) {
@@ -468,12 +265,23 @@ func (m *SyncRequest) MarshalTo(dAtA []byte) (int, error) {
 	_ = i
 	var l int
 	_ = l
-	if m.SyncOneof != nil {
-		nn1, err1 := m.SyncOneof.MarshalTo(dAtA[i:])
-		if err1 != nil {
-			return 0, err1
-		}
-		i += nn1
+	if len(m.Data) > 0 {
+		dAtA[i] = 0xa
+		i++
+		i = encodeVarintSyncerService(dAtA, i, uint64(len(m.Data)))
+		i += copy(dAtA[i:], m.Data)
+	}
+	if len(m.Path) > 0 {
+		dAtA[i] = 0x12
+		i++
+		i = encodeVarintSyncerService(dAtA, i, uint64(len(m.Path)))
+		i += copy(dAtA[i:], m.Path)
+	}
+	if len(m.ContentType) > 0 {
+		dAtA[i] = 0x1a
+		i++
+		i = encodeVarintSyncerService(dAtA, i, uint64(len(m.ContentType)))
+		i += copy(dAtA[i:], m.ContentType)
 	}
 	if m.XXX_unrecognized != nil {
 		i += copy(dAtA[i:], m.XXX_unrecognized)
@@ -481,30 +289,6 @@ func (m *SyncRequest) MarshalTo(dAtA []byte) (int, error) {
 	return i, nil
 }
 
-func (m *SyncRequest_Data) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
-	if m.Data != nil {
-		dAtA[i] = 0xa
-		i++
-		i = encodeVarintSyncerService(dAtA, i, uint64(len(m.Data)))
-		i += copy(dAtA[i:], m.Data)
-	}
-	return i, nil
-}
-func (m *SyncRequest_Meta) MarshalTo(dAtA []byte) (int, error) {
-	i := 0
-	if m.Meta != nil {
-		dAtA[i] = 0x12
-		i++
-		i = encodeVarintSyncerService(dAtA, i, uint64(m.Meta.Size()))
-		n2, err2 := m.Meta.MarshalTo(dAtA[i:])
-		if err2 != nil {
-			return 0, err2
-		}
-		i += n2
-	}
-	return i, nil
-}
 func encodeVarintSyncerService(dAtA []byte, offset int, v uint64) int {
 	for v >= 1<<7 {
 		dAtA[offset] = uint8(v&0x7f | 0x80)
@@ -514,13 +298,21 @@ func encodeVarintSyncerService(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return offset + 1
 }
-func (m *Metadata) Size() (n int) {
+func (m *SyncRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
+	l = len(m.Data)
+	if l > 0 {
+		n += 1 + l + sovSyncerService(uint64(l))
+	}
 	l = len(m.Path)
+	if l > 0 {
+		n += 1 + l + sovSyncerService(uint64(l))
+	}
+	l = len(m.ContentType)
 	if l > 0 {
 		n += 1 + l + sovSyncerService(uint64(l))
 	}
@@ -530,137 +322,11 @@ func (m *Metadata) Size() (n int) {
 	return n
 }
 
-func (m *SyncRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.SyncOneof != nil {
-		n += m.SyncOneof.Size()
-	}
-	if m.XXX_unrecognized != nil {
-		n += len(m.XXX_unrecognized)
-	}
-	return n
-}
-
-func (m *SyncRequest_Data) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Data != nil {
-		l = len(m.Data)
-		n += 1 + l + sovSyncerService(uint64(l))
-	}
-	return n
-}
-func (m *SyncRequest_Meta) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.Meta != nil {
-		l = m.Meta.Size()
-		n += 1 + l + sovSyncerService(uint64(l))
-	}
-	return n
-}
-
 func sovSyncerService(x uint64) (n int) {
 	return (math_bits.Len64(x|1) + 6) / 7
 }
 func sozSyncerService(x uint64) (n int) {
 	return sovSyncerService(uint64((x << 1) ^ uint64((int64(x) >> 63))))
-}
-func (m *Metadata) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowSyncerService
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: Metadata: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: Metadata: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Path", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowSyncerService
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthSyncerService
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthSyncerService
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Path = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipSyncerService(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if skippy < 0 {
-				return ErrInvalidLengthSyncerService
-			}
-			if (iNdEx + skippy) < 0 {
-				return ErrInvalidLengthSyncerService
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.XXX_unrecognized = append(m.XXX_unrecognized, dAtA[iNdEx:iNdEx+skippy]...)
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
 }
 func (m *SyncRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
@@ -720,15 +386,16 @@ func (m *SyncRequest) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			v := make([]byte, postIndex-iNdEx)
-			copy(v, dAtA[iNdEx:postIndex])
-			m.SyncOneof = &SyncRequest_Data{v}
+			m.Data = append(m.Data[:0], dAtA[iNdEx:postIndex]...)
+			if m.Data == nil {
+				m.Data = []byte{}
+			}
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Meta", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Path", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowSyncerService
@@ -738,26 +405,55 @@ func (m *SyncRequest) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthSyncerService
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthSyncerService
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			v := &Metadata{}
-			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
+			m.Path = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ContentType", wireType)
 			}
-			m.SyncOneof = &SyncRequest_Meta{v}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowSyncerService
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthSyncerService
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthSyncerService
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ContentType = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

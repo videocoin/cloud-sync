@@ -18,20 +18,20 @@ github.com/getsentry/raven-go
 github.com/gogo/googleapis/google/api
 # github.com/gogo/protobuf v1.3.0
 github.com/gogo/protobuf/types
+github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/sortkeys
-github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 # github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/protoc-gen-go/descriptor
-github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/protoc-gen-go/generator
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
+github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/struct
 github.com/golang/protobuf/protoc-gen-go/generator/internal/remap
 github.com/golang/protobuf/protoc-gen-go/plugin
@@ -51,7 +51,7 @@ github.com/grpc-ecosystem/go-grpc-middleware/util/backoffutils
 github.com/grpc-ecosystem/go-grpc-middleware/util/metautils
 # github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 github.com/grpc-ecosystem/go-grpc-prometheus
-# github.com/grpc-ecosystem/grpc-gateway v1.9.0
+# github.com/grpc-ecosystem/grpc-gateway v1.9.3
 github.com/grpc-ecosystem/grpc-gateway/runtime
 github.com/grpc-ecosystem/grpc-gateway/utilities
 github.com/grpc-ecosystem/grpc-gateway/internal
@@ -83,6 +83,8 @@ github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
+# github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
+github.com/streadway/amqp
 # github.com/uber/jaeger-client-go v2.16.0+incompatible
 github.com/uber/jaeger-client-go
 github.com/uber/jaeger-client-go/config
@@ -103,13 +105,14 @@ github.com/uber/jaeger-client-go/thrift-gen/agent
 github.com/uber/jaeger-client-go/thrift-gen/baggage
 # github.com/uber/jaeger-lib v2.0.0+incompatible
 github.com/uber/jaeger-lib/metrics
-# github.com/videocoin/cloud-api v0.2.13 => ../cloud-api
-github.com/videocoin/cloud-api/rpc
+# github.com/videocoin/cloud-api v0.2.14 => ../cloud-api
 github.com/videocoin/cloud-api/syncer/v1
-# github.com/videocoin/cloud-pkg v0.0.5
+github.com/videocoin/cloud-api/rpc
+# github.com/videocoin/cloud-pkg v0.0.6
 github.com/videocoin/cloud-pkg/logger
 github.com/videocoin/cloud-pkg/tracer
 github.com/videocoin/cloud-pkg/grpcutil
+github.com/videocoin/cloud-pkg/mqmux
 # go.opencensus.io v0.20.1
 go.opencensus.io/trace
 go.opencensus.io/plugin/ochttp
@@ -127,12 +130,12 @@ go.opencensus.io/internal/tagencoding
 go.opencensus.io/metric/metricdata
 go.opencensus.io/metric/metricproducer
 go.opencensus.io/resource
-# golang.org/x/net v0.0.0-20190522155817-f3200d17e092
+# golang.org/x/net v0.0.0-20190311183353-d8887717615a
 golang.org/x/net/trace
-golang.org/x/net/context
 golang.org/x/net/internal/timeseries
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
+golang.org/x/net/context
 golang.org/x/net/http/httpguts
 golang.org/x/net/idna
 golang.org/x/net/context/ctxhttp
@@ -173,18 +176,17 @@ google.golang.org/appengine/internal/log
 google.golang.org/appengine/internal/remote_api
 # google.golang.org/genproto v0.0.0-20190404172233-64821d5d2107
 google.golang.org/genproto/googleapis/iam/v1
-google.golang.org/genproto/googleapis/rpc/code
-google.golang.org/genproto/googleapis/api/annotations
-google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/protobuf/field_mask
+google.golang.org/genproto/googleapis/rpc/status
+google.golang.org/genproto/googleapis/rpc/code
+google.golang.org/genproto/googleapis/api/annotations
 # google.golang.org/grpc v1.23.0
 google.golang.org/grpc
 google.golang.org/grpc/reflection
 google.golang.org/grpc/codes
-google.golang.org/grpc/status
 google.golang.org/grpc/grpclog
-google.golang.org/grpc/keepalive
+google.golang.org/grpc/status
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/roundrobin
 google.golang.org/grpc/connectivity
@@ -200,6 +202,7 @@ google.golang.org/grpc/internal/envconfig
 google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/transport
+google.golang.org/grpc/keepalive
 google.golang.org/grpc/metadata
 google.golang.org/grpc/naming
 google.golang.org/grpc/peer

@@ -21,16 +21,11 @@ service SyncerService {
         };
     }
 
-    rpc Sync(stream SyncRequest) returns (google.protobuf.Empty) {}
-}
-
-message Metadata {
-    string path = 1;
+    rpc Sync(SyncRequest) returns (google.protobuf.Empty) {}
 }
 
 message SyncRequest {
-    oneof sync_oneof {
-        bytes data = 1;
-        Metadata meta = 2;
-    }
+    bytes data = 1;
+    string path = 2;
+    string content_type = 3;
 }
