@@ -32,6 +32,11 @@ spec:
               value: "6831"
             - name: RPC_ADDR
               value: 0.0.0.0:{{ .Values.service.internalRpcPort }}
+            - name: BUCKET
+              valueFrom:
+                configMapKeyRef:
+                  name: {{ .Chart.Name }}
+                  key: bucket
             - name: SENTRY_DSN
               valueFrom:
                 secretKeyRef:
