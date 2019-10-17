@@ -10,8 +10,8 @@ config: {}
 
 service:
   type: ClusterIP
-  externalRpcPort: 5010
-  internalRpcPort: 5010
+  externalRpcPort: 5021
+  internalRpcPort: 5021
 
 autoscaler:
   minCount: 1
