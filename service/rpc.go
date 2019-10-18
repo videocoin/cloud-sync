@@ -3,7 +3,6 @@ package service
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"net"
 
 	protoempty "github.com/gogo/protobuf/types"
@@ -64,31 +63,33 @@ func (s *RpcServer) Health(ctx context.Context, req *protoempty.Empty) (*rpc.Hea
 }
 
 func (s *RpcServer) Sync(ctx context.Context, req *v1.SyncRequest) (*protoempty.Empty, error) {
-	ws := s.writer.NewSession(context.Background(), req.Path, req.ContentType)
+	s.logger.WithField("path", req.Path).Info("syncing")
 
-	if data := req.GetData(); data != nil {
-		if ws == nil {
-			err := fmt.Errorf("failed to start write session")
-			s.logger.Errorf(err.Error())
+	go func(ctx context.Context, req *v1.SyncRequest) {
+		logger := s.logger.WithField("path", req.Path)
 
-			return nil, err
+		data := req.GetData()
+		if data == nil {
+			logger.Error("empty data")
+			return
 		}
 
-		go func() {
-			defer func() {
-				if err := ws.Close(true); err != nil {
-					s.logger.Errorf("failed to close: %s", err)
-				}
-			}()
-
-			if err := ws.Write(bytes.NewReader(data)); err != nil {
-				err := fmt.Errorf("failed to write: %s", err.Error())
-				s.logger.Errorf(err.Error())
+		ws := s.writer.NewSession(context.Background(), req.Path, req.ContentType)
+		defer func() {
+			err := ws.Close(true)
+			if err != nil {
+				logger.Errorf("failed to close: %s", err)
 			}
-
-			s.logger.WithField("path", req.Path).Infof("successfully synced file")
 		}()
-	}
+
+		err := ws.Write(bytes.NewReader(data))
+		if err != nil {
+			logger.Errorf("failed to write: %s", err.Error())
+			return
+		}
+
+		logger.Infof("successfully synced file")
+	}(ctx, req)
 
 	return &protoempty.Empty{}, nil
 }
