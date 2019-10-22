@@ -37,6 +37,16 @@ spec:
                 configMapKeyRef:
                   name: {{ .Chart.Name }}
                   key: bucket
+            - name: MQURI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}
+                  key: mqUri
+            - name: DBURI
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Chart.Name }}
+                  key: dbUri
             - name: SENTRY_DSN
               valueFrom:
                 secretKeyRef:

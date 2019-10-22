@@ -14,6 +14,14 @@ github.com/certifi/gocertifi
 github.com/evalphobia/logrus_sentry
 # github.com/getsentry/raven-go v0.2.0
 github.com/getsentry/raven-go
+# github.com/go-redis/redis v6.15.6+incompatible
+github.com/go-redis/redis
+github.com/go-redis/redis/internal
+github.com/go-redis/redis/internal/consistenthash
+github.com/go-redis/redis/internal/hashtag
+github.com/go-redis/redis/internal/pool
+github.com/go-redis/redis/internal/proto
+github.com/go-redis/redis/internal/util
 # github.com/gogo/googleapis v1.2.0
 github.com/gogo/googleapis/google/api
 # github.com/gogo/protobuf v1.3.0
@@ -37,6 +45,8 @@ github.com/golang/protobuf/protoc-gen-go/generator/internal/remap
 github.com/golang/protobuf/protoc-gen-go/plugin
 # github.com/googleapis/gax-go/v2 v2.0.4
 github.com/googleapis/gax-go/v2
+# github.com/grafov/m3u8 v0.11.1
+github.com/grafov/m3u8
 # github.com/grpc-ecosystem/go-grpc-middleware v1.0.0
 github.com/grpc-ecosystem/go-grpc-middleware
 github.com/grpc-ecosystem/go-grpc-middleware/logging/logrus
@@ -107,12 +117,14 @@ github.com/uber/jaeger-client-go/thrift-gen/baggage
 github.com/uber/jaeger-lib/metrics
 # github.com/videocoin/cloud-api v0.2.14 => ../cloud-api
 github.com/videocoin/cloud-api/syncer/v1
+github.com/videocoin/cloud-api/streams/private/v1
+github.com/videocoin/cloud-api/streams/v1
 github.com/videocoin/cloud-api/rpc
 # github.com/videocoin/cloud-pkg v0.0.6
 github.com/videocoin/cloud-pkg/logger
 github.com/videocoin/cloud-pkg/tracer
-github.com/videocoin/cloud-pkg/grpcutil
 github.com/videocoin/cloud-pkg/mqmux
+github.com/videocoin/cloud-pkg/grpcutil
 # go.opencensus.io v0.20.1
 go.opencensus.io/trace
 go.opencensus.io/plugin/ochttp
