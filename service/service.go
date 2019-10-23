@@ -1,25 +1,48 @@
 package service
 
+import (
+	"github.com/go-redis/redis"
+	"github.com/videocoin/cloud-sync/eventbus"
+)
+
 type Service struct {
 	cfg *Config
 	rpc *RpcServer
+	eb  *eventbus.EventBus
 }
 
 func NewService(cfg *Config) (*Service, error) {
-	writerOptions := &WriterOptions{
-		Bucket: cfg.Bucket,
-		Logger: cfg.Logger,
+	redisOpts, err := redis.ParseURL(cfg.DBURI)
+	if err != nil {
+		return nil, err
 	}
 
-	writer, err := NewWriter(writerOptions)
+	redisOpts.MaxRetries = 3
+	redisOpts.PoolSize = 50
+
+	dbcli := redis.NewClient(redisOpts)
+
+	ds, err := NewDatastore(dbcli)
+	if err != nil {
+		return nil, err
+	}
+
+	ebConfig := &eventbus.Config{
+		URI:    cfg.MQURI,
+		Name:   cfg.Name,
+		Logger: cfg.Logger.WithField("system", "eventbus"),
+	}
+	eb, err := eventbus.New(ebConfig)
 	if err != nil {
 		return nil, err
 	}
 
 	rpcOptions := &RpcServerOptions{
 		Addr:   cfg.RPCAddr,
-		Writer: writer,
 		Logger: cfg.Logger,
+		DS:     ds,
+		EB:     eb,
+		Bucket: cfg.Bucket,
 	}
 
 	rpc, err := NewRpcServer(rpcOptions)
@@ -30,6 +53,7 @@ func NewService(cfg *Config) (*Service, error) {
 	svc := &Service{
 		cfg: cfg,
 		rpc: rpc,
+		eb:  eb,
 	}
 
 	return svc, nil
@@ -37,9 +61,12 @@ func NewService(cfg *Config) (*Service, error) {
 
 func (s *Service) Start() error {
 	go s.rpc.Start()
+	go s.eb.Start()
+
 	return nil
 }
 
 func (s *Service) Stop() error {
+	s.eb.Stop()
 	return nil
 }
