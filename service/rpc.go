@@ -107,9 +107,16 @@ func (s *RpcServer) Sync(ctx context.Context, req *v1.SyncRequest) (*protoempty.
 
 		emptyCtx := context.Background()
 
-		err = s.uploadSegment(emptyCtx, streamID, segmentNum, req.ContentType, data)
+		_, _, err = s.uploadSegment(emptyCtx, streamID, segmentNum, req.ContentType, data)
 		if err != nil {
 			logger.Errorf("failed to upload segment: %s", err.Error())
+			return
+		}
+
+		logger.Info("generating and uploading live master playlist")
+		_, _, err = s.generateAndUploadLiveMasterPlaylist(emptyCtx, streamID, segmentNum)
+		if err != nil {
+			logger.Errorf("failed to generate live master playlist: %s", err.Error())
 			return
 		}
 
@@ -127,116 +134,172 @@ func (s *RpcServer) Sync(ctx context.Context, req *v1.SyncRequest) (*protoempty.
 			}
 		}
 
-		logger.Info("generating and uploading live master playlist")
-		err = s.generateAndUploadLiveMasterPlaylist(emptyCtx, streamID, segmentNum)
-		if err != nil {
-			logger.Errorf("failed to generate live master playlist: %s", err.Error())
-			return
-		}
-
 	}(ctx, req)
 
 	return &protoempty.Empty{}, nil
 }
 
-func (s *RpcServer) uploadSegment(ctx context.Context, streamID string, segmentNum int, ct string, data []byte) error {
+func (s *RpcServer) uploadSegment(ctx context.Context, streamID string, segmentNum int, ct string, data []byte) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
+	objectName := fmt.Sprintf("%s/%d.ts", streamID, segmentNum)
+
 	logger := s.logger.WithFields(logrus.Fields{
 		"stream_id":   streamID,
 		"segment_num": segmentNum,
+		"bucket":      s.bucket,
+		"object_name": objectName,
 	})
-
-	objectName := fmt.Sprintf("%s/%d.ts", streamID, segmentNum)
-
-	logger = logger.WithField("object_name", objectName)
-
-	w := s.bh.Object(objectName).NewWriter(ctx)
-	w.ACL = []storage.ACLRule{
-		storage.ACLRule{
-			Entity: storage.AllUsers,
-			Role:   storage.RoleReader,
-		},
-	}
-	w.ContentType = ct
-	defer func() {
-		err := w.Close()
-		if err != nil {
-			logger.Errorf("failed to close: %s", err)
-		}
-	}()
 
 	logger.Info("uploading segment")
 
-	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
-		return err
-	}
-
-	logger.Infof("successfully synced segment")
-
-	objAttrs, err := s.bh.Object(objectName).Attrs(ctx)
+	gctx := context.Background()
+	cli, err := storage.NewClient(gctx)
 	if err != nil {
-		return err
+		return nil, nil, err
+	}
+	defer cli.Close()
+
+	bh := cli.Bucket(s.bucket)
+	if _, err := bh.Attrs(ctx); err != nil {
+		return nil, nil, err
 	}
 
-	logger.Infof("segment object %+v\n", objAttrs)
+	obj := bh.Object(objectName)
+	w := obj.NewWriter(ctx)
 
-	return nil
+	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
+		return nil, nil, err
+	}
+
+	if err := w.Close(); err != nil {
+		return nil, nil, err
+	}
+
+	if err := obj.ACL().Set(ctx, storage.AllUsers, storage.RoleReader); err != nil {
+		return nil, nil, err
+	}
+
+	attrs, err := obj.Attrs(ctx)
+
+	logger.Info("segment has been uploaded successfully")
+
+	return obj, attrs, err
 }
 
-func (s *RpcServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, streamID string, segmentNum int) error {
+func (s *RpcServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, streamID string, segmentNum int) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
+	objectName := fmt.Sprintf("%s/index.m3u8", streamID)
+
 	logger := s.logger.WithFields(logrus.Fields{
 		"stream_id":   streamID,
 		"segment_num": segmentNum,
+		"bucket":      s.bucket,
+		"object_name": objectName,
 	})
 
-	objectName := fmt.Sprintf("%s/index.m3u8", streamID)
-
-	logger = logger.WithField("object_name", objectName)
+	logger.Info("generating live master playlist")
 
 	p, err := m3u8.NewMediaPlaylist(uint(segmentNum), uint(segmentNum))
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	for num := 1; num < segmentNum; num++ {
+	for num := 1; num <= segmentNum; num++ {
 		err := p.Append(fmt.Sprintf("%d.ts", num), 10, "")
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 	}
 
 	data := p.Encode().Bytes()
 
-	w := s.bh.Object(objectName).NewWriter(ctx)
-	w.ACL = []storage.ACLRule{
-		storage.ACLRule{
-			Entity: storage.AllUsers,
-			Role:   storage.RoleReader,
-		},
-	}
-	w.ContentType = "application/x-mpegURL"
-	defer func() {
-		err := w.Close()
-		if err != nil {
-			logger.Errorf("failed to close: %s", err)
-		}
-	}()
-
 	logger.Info("uploading live master playlist")
 
-	if _, err = io.Copy(w, bytes.NewReader(data)); err != nil {
-		return err
-	}
-
-	logger.Infof("successfully synced live master playlist")
-
-	objAttrs, err := s.bh.Object(objectName).Attrs(ctx)
+	gctx := context.Background()
+	cli, err := storage.NewClient(gctx)
 	if err != nil {
-		return err
+		return nil, nil, err
+	}
+	defer cli.Close()
+
+	bh := cli.Bucket(s.bucket)
+	if _, err := bh.Attrs(ctx); err != nil {
+		return nil, nil, err
 	}
 
-	logger.Infof("playlist object %+v\n", objAttrs)
+	obj := bh.Object(objectName)
+	w := obj.NewWriter(ctx)
+	w.CacheControl = "no-cache"
 
-	return nil
+	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
+		return nil, nil, err
+	}
+
+	if err := w.Close(); err != nil {
+		return nil, nil, err
+	}
+
+	if err := obj.ACL().Set(ctx, storage.AllUsers, storage.RoleReader); err != nil {
+		return nil, nil, err
+	}
+
+	attrs, err := obj.Attrs(ctx)
+
+	logger.Info("live master playlist has been uploaded successfully")
+
+	return obj, attrs, err
+	// logger := s.logger.WithFields(logrus.Fields{
+	// 	"stream_id":   streamID,
+	// 	"segment_num": segmentNum,
+	// })
+
+	// objectName := fmt.Sprintf("%s/index.m3u8", streamID)
+
+	// logger = logger.WithField("object_name", objectName)
+
+	// p, err := m3u8.NewMediaPlaylist(uint(segmentNum), uint(segmentNum))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// for num := 1; num < segmentNum; num++ {
+	// 	err := p.Append(fmt.Sprintf("%d.ts", num), 10, "")
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// }
+
+	// data := p.Encode().Bytes()
+
+	// w := s.bh.Object(objectName).NewWriter(ctx)
+	// w.ACL = []storage.ACLRule{
+	// 	storage.ACLRule{
+	// 		Entity: storage.AllUsers,
+	// 		Role:   storage.RoleReader,
+	// 	},
+	// }
+	// w.ContentType = "application/x-mpegURL"
+	// defer func() {
+	// 	err := w.Close()
+	// 	if err != nil {
+	// 		logger.Errorf("failed to close: %s", err)
+	// 	}
+	// }()
+
+	// logger.Info("uploading live master playlist")
+
+	// if _, err = io.Copy(w, bytes.NewReader(data)); err != nil {
+	// 	return err
+	// }
+
+	// logger.Infof("successfully synced live master playlist")
+
+	// objAttrs, err := s.bh.Object(objectName).Attrs(ctx)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// logger.Infof("playlist object %+v\n", objAttrs)
+
+	// return nil
 }
 
 func parseReqPath(path string) (string, int, error) {
