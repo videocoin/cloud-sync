@@ -6,9 +6,10 @@ import (
 )
 
 type Service struct {
-	cfg *Config
-	rpc *RpcServer
-	eb  *eventbus.EventBus
+	cfg        *Config
+	rpc        *RpcServer
+	eb         *eventbus.EventBus
+	httpServer *HttpServer
 }
 
 func NewService(cfg *Config) (*Service, error) {
@@ -50,10 +51,23 @@ func NewService(cfg *Config) (*Service, error) {
 		return nil, err
 	}
 
+	httpServerOpts := &HttpServerOptions{
+		Addr:   cfg.HTTPAddr,
+		Logger: cfg.Logger.WithField("system", "http-server"),
+		Bucket: cfg.Bucket,
+		DS:     ds,
+		EB:     eb,
+	}
+	hs, err := NewHttpServer(httpServerOpts)
+	if err != nil {
+		return nil, err
+	}
+
 	svc := &Service{
-		cfg: cfg,
-		rpc: rpc,
-		eb:  eb,
+		cfg:        cfg,
+		rpc:        rpc,
+		eb:         eb,
+		httpServer: hs,
 	}
 
 	return svc, nil
@@ -62,6 +76,7 @@ func NewService(cfg *Config) (*Service, error) {
 func (s *Service) Start() error {
 	go s.rpc.Start()
 	go s.eb.Start()
+	go s.httpServer.Start()
 
 	return nil
 }

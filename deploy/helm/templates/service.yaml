@@ -16,5 +16,9 @@ spec:
       targetPort: {{ .Values.service.internalRpcPort }}
       protocol: TCP
       name: grpc
+    - port: {{ .Values.service.externalHttpPort }}
+      targetPort: {{ .Values.service.internalHttpPort }}
+      protocol: TCP
+      name: http
   selector:
     app: {{ .Chart.Name }}

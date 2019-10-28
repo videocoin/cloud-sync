@@ -10,6 +10,8 @@ cloud.google.com/go/compute/metadata
 github.com/beorn7/perks/quantile
 # github.com/certifi/gocertifi v0.0.0-20190506164543-d2eda7129713
 github.com/certifi/gocertifi
+# github.com/dgrijalva/jwt-go v3.2.0+incompatible
+github.com/dgrijalva/jwt-go
 # github.com/evalphobia/logrus_sentry v0.8.2
 github.com/evalphobia/logrus_sentry
 # github.com/getsentry/raven-go v0.2.0
@@ -22,9 +24,9 @@ github.com/go-redis/redis/internal/hashtag
 github.com/go-redis/redis/internal/pool
 github.com/go-redis/redis/internal/proto
 github.com/go-redis/redis/internal/util
-# github.com/gogo/googleapis v1.2.0
+# github.com/gogo/googleapis v1.3.0
 github.com/gogo/googleapis/google/api
-# github.com/gogo/protobuf v1.3.0
+# github.com/gogo/protobuf v1.3.1
 github.com/gogo/protobuf/types
 github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/proto
@@ -33,16 +35,14 @@ github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 # github.com/golang/protobuf v1.3.1
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/protoc-gen-go/descriptor
+github.com/golang/protobuf/descriptor
 github.com/golang/protobuf/jsonpb
-github.com/golang/protobuf/protoc-gen-go/generator
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/ptypes/struct
-github.com/golang/protobuf/protoc-gen-go/generator/internal/remap
-github.com/golang/protobuf/protoc-gen-go/plugin
 # github.com/googleapis/gax-go/v2 v2.0.4
 github.com/googleapis/gax-go/v2
 # github.com/grafov/m3u8 v0.11.1
@@ -61,7 +61,7 @@ github.com/grpc-ecosystem/go-grpc-middleware/util/backoffutils
 github.com/grpc-ecosystem/go-grpc-middleware/util/metautils
 # github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 github.com/grpc-ecosystem/go-grpc-prometheus
-# github.com/grpc-ecosystem/grpc-gateway v1.9.3
+# github.com/grpc-ecosystem/grpc-gateway v1.11.3
 github.com/grpc-ecosystem/grpc-gateway/runtime
 github.com/grpc-ecosystem/grpc-gateway/utilities
 github.com/grpc-ecosystem/grpc-gateway/internal
@@ -71,6 +71,18 @@ github.com/hashicorp/golang-lru/simplelru
 github.com/kelseyhightower/envconfig
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
+# github.com/labstack/echo v3.3.10+incompatible
+github.com/labstack/echo
+github.com/labstack/echo/middleware
+# github.com/labstack/gommon v0.2.9
+github.com/labstack/gommon/color
+github.com/labstack/gommon/log
+github.com/labstack/gommon/bytes
+github.com/labstack/gommon/random
+# github.com/mattn/go-colorable v0.1.2
+github.com/mattn/go-colorable
+# github.com/mattn/go-isatty v0.0.8
+github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
 # github.com/opentracing/opentracing-go v1.1.0
@@ -115,16 +127,21 @@ github.com/uber/jaeger-client-go/thrift-gen/agent
 github.com/uber/jaeger-client-go/thrift-gen/baggage
 # github.com/uber/jaeger-lib v2.0.0+incompatible
 github.com/uber/jaeger-lib/metrics
+# github.com/valyala/bytebufferpool v1.0.0
+github.com/valyala/bytebufferpool
+# github.com/valyala/fasttemplate v1.0.1
+github.com/valyala/fasttemplate
 # github.com/videocoin/cloud-api v0.2.14 => ../cloud-api
 github.com/videocoin/cloud-api/syncer/v1
 github.com/videocoin/cloud-api/streams/private/v1
 github.com/videocoin/cloud-api/streams/v1
 github.com/videocoin/cloud-api/rpc
-# github.com/videocoin/cloud-pkg v0.0.6
+# github.com/videocoin/cloud-pkg v0.0.6 => ../cloud-pkg
 github.com/videocoin/cloud-pkg/logger
 github.com/videocoin/cloud-pkg/tracer
 github.com/videocoin/cloud-pkg/mqmux
 github.com/videocoin/cloud-pkg/grpcutil
+github.com/videocoin/cloud-pkg/logrusext
 # go.opencensus.io v0.20.1
 go.opencensus.io/trace
 go.opencensus.io/plugin/ochttp
@@ -142,6 +159,9 @@ go.opencensus.io/internal/tagencoding
 go.opencensus.io/metric/metricdata
 go.opencensus.io/metric/metricproducer
 go.opencensus.io/resource
+# golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+golang.org/x/crypto/acme/autocert
+golang.org/x/crypto/acme
 # golang.org/x/net v0.0.0-20190311183353-d8887717615a
 golang.org/x/net/trace
 golang.org/x/net/internal/timeseries

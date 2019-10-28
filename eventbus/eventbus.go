@@ -55,14 +55,15 @@ func (e *EventBus) EmitUpdateStreamStatus(ctx context.Context, id string, status
 	headers := make(amqp.Table)
 
 	span := opentracing.SpanFromContext(ctx)
-	ext.SpanKindRPCServer.Set(span)
-	ext.Component.Set(span, "syncer")
-
-	span.Tracer().Inject(
-		span.Context(),
-		opentracing.TextMap,
-		mqmux.RMQHeaderCarrier(headers),
-	)
+	if span != nil {
+		ext.SpanKindRPCServer.Set(span)
+		ext.Component.Set(span, "syncer")
+		span.Tracer().Inject(
+			span.Context(),
+			opentracing.TextMap,
+			mqmux.RMQHeaderCarrier(headers),
+		)
+	}
 
 	event := &privatev1.Event{
 		Type:     privatev1.EventTypeUpdateStatus,

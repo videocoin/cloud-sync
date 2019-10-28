@@ -12,6 +12,8 @@ service:
   type: ClusterIP
   externalRpcPort: 5021
   internalRpcPort: 5021
+  externalHttpPort: 5121
+  internalHttpPort: 5121
 
 autoscaler:
   minCount: 1
