@@ -6,7 +6,9 @@ RUN make build
 FROM blitznote/debase:18.04
 
 RUN apt-get update
-RUN apt-get install -y ca-certificates
+RUN apt-get install -y ca-certificates curl
 COPY --from=builder /go/src/github.com/videocoin/cloud-sync/bin/syncer /opt/videocoin/bin/syncer
+RUN GRPC_HEALTH_PROBE_VERSION=v0.3.0 && \
+   curl -L -k https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-amd64 --output /bin/grpc_health_probe && chmod +x /bin/grpc_health_probe
 CMD ["/opt/videocoin/bin/syncer"]
 
