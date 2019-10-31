@@ -14,13 +14,14 @@ import (
 	protoempty "github.com/gogo/protobuf/types"
 	"github.com/grafov/m3u8"
 	"github.com/sirupsen/logrus"
-	"github.com/videocoin/cloud-api/rpc"
 	streamsv1 "github.com/videocoin/cloud-api/streams/v1"
 	v1 "github.com/videocoin/cloud-api/syncer/v1"
 	"github.com/videocoin/cloud-pkg/grpcutil"
 	"github.com/videocoin/cloud-sync/eventbus"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
+	"google.golang.org/grpc/health"
+	"google.golang.org/grpc/health/grpc_health_v1"
 )
 
 type RpcServerOptions struct {
@@ -48,7 +49,8 @@ func NewRpcServer(opts *RpcServerOptions) (*RpcServer, error) {
 	grpcOpts = append(grpcOpts, grpc.MaxRecvMsgSize(1024*1024*1024))
 
 	grpcServer := grpc.NewServer(grpcOpts...)
-
+	healthService := health.NewServer()
+	grpc_health_v1.RegisterHealthServer(grpcServer, healthService)
 	listen, err := net.Listen("tcp", opts.Addr)
 	if err != nil {
 		return nil, err
@@ -81,10 +83,6 @@ func NewRpcServer(opts *RpcServerOptions) (*RpcServer, error) {
 func (s *RpcServer) Start() error {
 	s.logger.Infof("starting rpc server on %s", s.addr)
 	return s.grpc.Serve(s.listen)
-}
-
-func (s *RpcServer) Health(ctx context.Context, req *protoempty.Empty) (*rpc.HealthStatus, error) {
-	return &rpc.HealthStatus{Status: "OK"}, nil
 }
 
 func (s *RpcServer) Sync(ctx context.Context, req *v1.SyncRequest) (*protoempty.Empty, error) {
