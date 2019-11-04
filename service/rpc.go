@@ -163,6 +163,7 @@ func (s *RpcServer) uploadSegment(ctx context.Context, streamID string, segmentN
 
 	obj := bh.Object(objectName)
 	w := obj.NewWriter(ctx)
+	w.CacheControl = "no-cache"
 
 	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
 		return nil, nil, err

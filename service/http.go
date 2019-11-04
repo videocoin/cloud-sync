@@ -152,6 +152,7 @@ func (hs *HttpServer) uploadSegment(ctx context.Context, streamID string, segmen
 	emptyCtx := context.Background()
 	obj := hs.bh.Object(objectName)
 	w := obj.NewWriter(emptyCtx)
+	w.CacheControl = "no-cache"
 
 	if _, err := io.Copy(w, src); err != nil {
 		return nil, nil, err
