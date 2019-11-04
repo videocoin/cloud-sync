@@ -153,6 +153,7 @@ func (hs *HttpServer) uploadSegment(ctx context.Context, streamID string, segmen
 	obj := hs.bh.Object(objectName)
 	w := obj.NewWriter(emptyCtx)
 	w.CacheControl = "no-cache"
+	w.ContentType = ct
 
 	if _, err := io.Copy(w, src); err != nil {
 		return nil, nil, err
@@ -207,6 +208,7 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 	obj := hs.bh.Object(objectName)
 	w := obj.NewWriter(ctx)
 	w.CacheControl = "no-cache"
+	w.ContentType = "application/x-mpegURL"
 
 	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
 		return nil, nil, err
