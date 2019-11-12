@@ -3,7 +3,7 @@ WORKDIR /go/src/github.com/videocoin/cloud-sync
 COPY . .
 RUN make build
 
-FROM blitznote/debase:18.04
+FROM bitnami/minideb:jessie
 
 RUN apt-get update
 RUN apt-get install -y ca-certificates curl
