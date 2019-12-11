@@ -179,6 +179,7 @@ func (hs *HttpServer) uploadSegment(ctx context.Context, streamID string, segmen
 
 func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, streamID string, segmentNum int) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
 	objectName := fmt.Sprintf("%s/index.m3u8", streamID)
+	tmpObjectName := fmt.Sprintf("%s/_index.m3u8", streamID)
 
 	logger := hs.logger.WithFields(logrus.Fields{
 		"stream_id":   streamID,
@@ -205,7 +206,8 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 
 	logger.Info("uploading live master playlist")
 
-	obj := hs.bh.Object(objectName)
+	obj := hs.bh.Object(tmpObjectName)
+
 	w := obj.NewWriter(ctx)
 	w.CacheControl = "no-cache"
 	w.ContentType = "application/x-mpegURL"
@@ -219,6 +221,23 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 	}
 
 	if err := obj.ACL().Set(ctx, storage.AllUsers, storage.RoleReader); err != nil {
+		return nil, nil, err
+	}
+
+	dst := hs.bh.Object(objectName)
+
+	copier := dst.CopierFrom(obj)
+	copier.ACL = []storage.ACLRule{
+		storage.ACLRule{
+			Entity: storage.AllUsers,
+			Role:   storage.RoleReader,
+		},
+	}
+	copier.ContentType = "application/x-mpegURL"
+	copier.CacheControl = "private, max-age=0, no-transform"
+
+	_, err = copier.Run(context.Background())
+	if err != nil {
 		return nil, nil, err
 	}
 
