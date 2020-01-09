@@ -80,6 +80,8 @@ func (hs *HttpServer) Start() error {
 func (hs *HttpServer) upload(c echo.Context) error {
 	path := c.FormValue("path")
 	ct := c.FormValue("ct")
+	last := c.FormValue("last")
+	isLast := last == "y"
 
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -112,7 +114,7 @@ func (hs *HttpServer) upload(c echo.Context) error {
 	}
 
 	logger.Info("generating and uploading live master playlist")
-	_, _, err = hs.generateAndUploadLiveMasterPlaylist(emptyCtx, streamID, segmentNum)
+	_, _, err = hs.generateAndUploadLiveMasterPlaylist(emptyCtx, streamID, segmentNum, isLast)
 	if err != nil {
 		e := fmt.Errorf("failed to generate live master playlist: %s", err.Error())
 		hs.logger.Error(e)
@@ -177,7 +179,7 @@ func (hs *HttpServer) uploadSegment(ctx context.Context, streamID string, segmen
 	return obj, attrs, err
 }
 
-func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, streamID string, segmentNum int) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
+func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, streamID string, segmentNum int, last bool) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
 	objectName := fmt.Sprintf("%s/index.m3u8", streamID)
 	tmpObjectName := fmt.Sprintf("%s/_index.m3u8", streamID)
 
@@ -193,6 +195,10 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 	p, err := m3u8.NewMediaPlaylist(uint(segmentNum), uint(segmentNum))
 	if err != nil {
 		return nil, nil, err
+	}
+
+	if last {
+		p.MediaType = m3u8.VOD
 	}
 
 	for num := 1; num <= segmentNum; num++ {
