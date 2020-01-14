@@ -191,6 +191,7 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 		"segment_num": segmentNum,
 		"bucket":      hs.bucket,
 		"object_name": objectName,
+		"last":        last,
 	})
 
 	logger.Info("generating live master playlist")
@@ -209,6 +210,10 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 		if err != nil {
 			return nil, nil, err
 		}
+	}
+
+	if last {
+		p.Close()
 	}
 
 	data := p.Encode().Bytes()
