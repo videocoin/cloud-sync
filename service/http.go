@@ -96,7 +96,10 @@ func (hs *HttpServer) upload(c echo.Context) error {
 	}
 	defer src.Close()
 
-	logger := hs.logger.WithField("path", path)
+	logger := hs.logger.WithFields(logrus.Fields{
+		"path":    path,
+		"is_last": isLast,
+	})
 
 	streamID, segmentNum, err := parseReqPath(path)
 	if err != nil {
