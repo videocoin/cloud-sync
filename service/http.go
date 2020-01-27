@@ -80,8 +80,10 @@ func (hs *HttpServer) Start() error {
 func (hs *HttpServer) upload(c echo.Context) error {
 	path := c.FormValue("path")
 	ct := c.FormValue("ct")
+	vod := c.FormValue("vod")
 	last := c.FormValue("last")
 	isLast := last == "y"
+	isVOD := vod == "y"
 
 	file, err := c.FormFile("file")
 	if err != nil {
@@ -116,14 +118,6 @@ func (hs *HttpServer) upload(c echo.Context) error {
 		return e
 	}
 
-	logger.Info("generating and uploading live master playlist")
-	_, _, err = hs.generateAndUploadLiveMasterPlaylist(emptyCtx, streamID, segmentNum, isLast)
-	if err != nil {
-		e := fmt.Errorf("failed to generate live master playlist: %s", err.Error())
-		hs.logger.Error(e)
-		return e
-	}
-
 	err = hs.ds.AddSegment(streamID, segmentNum)
 	if err != nil {
 		e := fmt.Errorf("failed to add segment: %s", err.Error())
@@ -131,11 +125,38 @@ func (hs *HttpServer) upload(c echo.Context) error {
 		return e
 	}
 
-	if segmentNum == 1 {
-		logger.Info("updating stream status as ready")
-		err = hs.eb.EmitUpdateStreamStatus(emptyCtx, streamID, streamsv1.StreamStatusReady)
+	if !isVOD {
+		logger.Info("generating and uploading live master playlist")
+		_, _, err = hs.generateAndUploadLiveMasterPlaylist(emptyCtx, streamID, segmentNum, isLast)
 		if err != nil {
-			logger.Errorf("failed to update stream status: %s", err)
+			e := fmt.Errorf("failed to generate live master playlist: %s", err.Error())
+			hs.logger.Error(e)
+			return e
+		}
+
+		if segmentNum == 1 {
+			logger.Info("updating stream status as ready")
+			err = hs.eb.EmitUpdateStreamStatus(emptyCtx, streamID, streamsv1.StreamStatusReady)
+			if err != nil {
+				logger.Errorf("failed to update stream status: %s", err)
+			}
+		}
+	} else {
+		maxNum, err := hs.ds.GetMaxSegment(streamID)
+		if err != nil {
+			e := fmt.Errorf("failed to get max segment num: %s", err.Error())
+			hs.logger.Error(e)
+			return e
+		}
+
+		if maxNum > 0 {
+			logger.Info("generating and uploading vod master playlist")
+			_, _, err = hs.generateAndUploadVODMasterPlaylist(emptyCtx, streamID, maxNum)
+			if err != nil {
+				e := fmt.Errorf("failed to generate vod master playlist: %s", err.Error())
+				hs.logger.Error(e)
+				return e
+			}
 		}
 	}
 
@@ -261,6 +282,84 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 	}
 
 	logger.Info("live master playlist has been uploaded successfully")
+
+	return obj, attrs, err
+}
+
+func (hs *HttpServer) generateAndUploadVODMasterPlaylist(ctx context.Context, streamID string, segmentNum int) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
+	objectName := fmt.Sprintf("%s/index.m3u8", streamID)
+	tmpObjectName := fmt.Sprintf("%s/_index.m3u8", streamID)
+
+	logger := hs.logger.WithFields(logrus.Fields{
+		"stream_id":   streamID,
+		"segment_num": segmentNum,
+		"bucket":      hs.bucket,
+		"object_name": objectName,
+	})
+
+	logger.Info("generating live master playlist")
+
+	p, err := m3u8.NewMediaPlaylist(uint(segmentNum), uint(segmentNum))
+	if err != nil {
+		return nil, nil, err
+	}
+
+	p.MediaType = m3u8.VOD
+
+	for num := 1; num <= segmentNum; num++ {
+		err := p.Append(fmt.Sprintf("%d.ts", num), 10, "")
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	p.Close()
+
+	data := p.Encode().Bytes()
+
+	logger.Info("uploading vod master playlist")
+
+	obj := hs.bh.Object(tmpObjectName)
+
+	w := obj.NewWriter(ctx)
+	w.CacheControl = "no-cache"
+	w.ContentType = "application/x-mpegURL"
+
+	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
+		return nil, nil, err
+	}
+
+	if err := w.Close(); err != nil {
+		return nil, nil, err
+	}
+
+	if err := obj.ACL().Set(ctx, storage.AllUsers, storage.RoleReader); err != nil {
+		return nil, nil, err
+	}
+
+	dst := hs.bh.Object(objectName)
+
+	copier := dst.CopierFrom(obj)
+	copier.ACL = []storage.ACLRule{
+		storage.ACLRule{
+			Entity: storage.AllUsers,
+			Role:   storage.RoleReader,
+		},
+	}
+	copier.ContentType = "application/x-mpegURL"
+	copier.CacheControl = "private, max-age=0, no-transform"
+
+	_, err = copier.Run(context.Background())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	attrs, err := obj.Attrs(ctx)
+	if err != nil {
+		return obj, attrs, err
+	}
+
+	logger.Info("vod master playlist has been uploaded successfully")
 
 	return obj, attrs, err
 }
