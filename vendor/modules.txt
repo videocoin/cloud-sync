@@ -90,6 +90,8 @@ github.com/matttproud/golang_protobuf_extensions/pbutil
 github.com/opentracing/opentracing-go
 github.com/opentracing/opentracing-go/ext
 github.com/opentracing/opentracing-go/log
+# github.com/patrickmn/sortutil v0.0.0-20120526081524-abeda66eb583
+github.com/patrickmn/sortutil
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
 # github.com/prometheus/client_golang v0.9.4

@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/go-redis/redis"
+	"github.com/patrickmn/sortutil"
 )
 
 type Datastore struct {
@@ -48,6 +49,7 @@ func (ds *Datastore) GetSegments(streamID string) ([]*Segment, error) {
 		}
 		segments = append(segments, segment)
 	}
+	sortutil.AscByField(segments, "Num")
 	return segments, err
 }
 

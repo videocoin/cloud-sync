@@ -10,6 +10,7 @@ require (
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/labstack/echo v3.3.10+incompatible
 	github.com/opentracing/opentracing-go v1.1.0
+	github.com/patrickmn/sortutil v0.0.0-20120526081524-abeda66eb583
 	github.com/sirupsen/logrus v1.4.2
 	github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94
 	github.com/videocoin/cloud-api v0.2.14
