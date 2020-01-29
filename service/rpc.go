@@ -14,14 +14,13 @@ import (
 	protoempty "github.com/gogo/protobuf/types"
 	"github.com/grafov/m3u8"
 	"github.com/sirupsen/logrus"
-	streamsv1 "github.com/videocoin/cloud-api/streams/v1"
 	v1 "github.com/videocoin/cloud-api/syncer/v1"
 	"github.com/videocoin/cloud-pkg/grpcutil"
 	"github.com/videocoin/cloud-sync/eventbus"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"
+	"google.golang.org/grpc/reflection"
 )
 
 type RpcServerOptions struct {
@@ -86,54 +85,6 @@ func (s *RpcServer) Start() error {
 }
 
 func (s *RpcServer) Sync(ctx context.Context, req *v1.SyncRequest) (*protoempty.Empty, error) {
-	s.logger.WithField("path", req.Path).Info("syncing")
-
-	go func(ctx context.Context, req *v1.SyncRequest) {
-		logger := s.logger.WithField("path", req.Path)
-
-		streamID, segmentNum, err := parseReqPath(req.Path)
-		if err != nil {
-			logger.Errorf("failed to parse request path: %s", err)
-			return
-		}
-
-		data := req.GetData()
-		if data == nil {
-			logger.Error("empty data")
-			return
-		}
-
-		emptyCtx := context.Background()
-
-		_, _, err = s.uploadSegment(emptyCtx, streamID, segmentNum, req.ContentType, data)
-		if err != nil {
-			logger.Errorf("failed to upload segment: %s", err.Error())
-			return
-		}
-
-		logger.Info("generating and uploading live master playlist")
-		_, _, err = s.generateAndUploadLiveMasterPlaylist(emptyCtx, streamID, segmentNum)
-		if err != nil {
-			logger.Errorf("failed to generate live master playlist: %s", err.Error())
-			return
-		}
-
-		err = s.ds.AddSegment(streamID, segmentNum)
-		if err != nil {
-			logger.Errorf("failed to add segment: %s", err.Error())
-			return
-		}
-
-		if segmentNum == 1 {
-			logger.Info("updating stream status as ready")
-			err = s.eb.EmitUpdateStreamStatus(ctx, streamID, streamsv1.StreamStatusReady)
-			if err != nil {
-				logger.Errorf("failed to update stream status: %s", err)
-			}
-		}
-
-	}(ctx, req)
-
 	return &protoempty.Empty{}, nil
 }
 
