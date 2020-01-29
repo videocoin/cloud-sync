@@ -7,6 +7,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 
 	"cloud.google.com/go/storage"
 	"github.com/grafov/m3u8"
@@ -82,6 +83,8 @@ func (hs *HttpServer) upload(c echo.Context) error {
 	ct := c.FormValue("ct")
 	vod := c.FormValue("vod")
 	last := c.FormValue("last")
+	durationStr := c.FormValue("duration")
+	duration, _ := strconv.ParseFloat(durationStr, 64)
 	isLast := last == "y"
 	isVOD := vod == "y"
 
@@ -118,16 +121,23 @@ func (hs *HttpServer) upload(c echo.Context) error {
 		return e
 	}
 
-	err = hs.ds.AddSegment(streamID, segmentNum)
+	err = hs.ds.AddSegment(streamID, segmentNum, duration)
 	if err != nil {
 		e := fmt.Errorf("failed to add segment: %s", err.Error())
 		hs.logger.Error(e)
 		return e
 	}
 
+	segments, err := hs.ds.GetSegments(streamID)
+	if err != nil {
+		e := fmt.Errorf("failed to get segments: %s", err.Error())
+		hs.logger.Error(e)
+		return e
+	}
+
 	if !isVOD {
 		logger.Info("generating and uploading live master playlist")
-		_, _, err = hs.generateAndUploadLiveMasterPlaylist(emptyCtx, streamID, segmentNum, isLast)
+		_, _, err = hs.generateAndUploadLiveMasterPlaylist(emptyCtx, streamID, segments, isLast)
 		if err != nil {
 			e := fmt.Errorf("failed to generate live master playlist: %s", err.Error())
 			hs.logger.Error(e)
@@ -142,16 +152,9 @@ func (hs *HttpServer) upload(c echo.Context) error {
 			}
 		}
 	} else {
-		maxNum, err := hs.ds.GetMaxSegment(streamID)
-		if err != nil {
-			e := fmt.Errorf("failed to get max segment num: %s", err.Error())
-			hs.logger.Error(e)
-			return e
-		}
-
-		if maxNum > 0 {
+		if len(segments) > 0 {
 			logger.Info("generating and uploading vod master playlist")
-			_, _, err = hs.generateAndUploadVODMasterPlaylist(emptyCtx, streamID, maxNum)
+			_, _, err = hs.generateAndUploadVODMasterPlaylist(emptyCtx, streamID, segments)
 			if err != nil {
 				e := fmt.Errorf("failed to generate vod master playlist: %s", err.Error())
 				hs.logger.Error(e)
@@ -203,13 +206,17 @@ func (hs *HttpServer) uploadSegment(ctx context.Context, streamID string, segmen
 	return obj, attrs, err
 }
 
-func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, streamID string, segmentNum int, last bool) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
+func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(
+	ctx context.Context,
+	streamID string,
+	segments []*Segment,
+	last bool,
+) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
 	objectName := fmt.Sprintf("%s/index.m3u8", streamID)
 	tmpObjectName := fmt.Sprintf("%s/_index.m3u8", streamID)
 
 	logger := hs.logger.WithFields(logrus.Fields{
 		"stream_id":   streamID,
-		"segment_num": segmentNum,
 		"bucket":      hs.bucket,
 		"object_name": objectName,
 		"last":        last,
@@ -217,7 +224,8 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 
 	logger.Info("generating live master playlist")
 
-	p, err := m3u8.NewMediaPlaylist(uint(segmentNum), uint(segmentNum))
+	segmentsCount := len(segments)
+	p, err := m3u8.NewMediaPlaylist(uint(segmentsCount), uint(segmentsCount))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -226,8 +234,8 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 		p.MediaType = m3u8.VOD
 	}
 
-	for num := 1; num <= segmentNum; num++ {
-		err := p.Append(fmt.Sprintf("%d.ts", num), 10, "")
+	for _, segment := range segments {
+		err := p.Append(fmt.Sprintf("%d.ts", segment.Num), segment.Duration, "")
 		if err != nil {
 			return nil, nil, err
 		}
@@ -286,28 +294,32 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(ctx context.Context, s
 	return obj, attrs, err
 }
 
-func (hs *HttpServer) generateAndUploadVODMasterPlaylist(ctx context.Context, streamID string, segmentNum int) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
+func (hs *HttpServer) generateAndUploadVODMasterPlaylist(
+	ctx context.Context,
+	streamID string,
+	segments []*Segment,
+) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
 	objectName := fmt.Sprintf("%s/index.m3u8", streamID)
 	tmpObjectName := fmt.Sprintf("%s/_index.m3u8", streamID)
 
 	logger := hs.logger.WithFields(logrus.Fields{
 		"stream_id":   streamID,
-		"segment_num": segmentNum,
 		"bucket":      hs.bucket,
 		"object_name": objectName,
 	})
 
-	logger.Info("generating live master playlist")
+	logger.Info("generating vod master playlist")
 
-	p, err := m3u8.NewMediaPlaylist(uint(segmentNum), uint(segmentNum))
+	segmentsCount := len(segments)
+	p, err := m3u8.NewMediaPlaylist(uint(segmentsCount), uint(segmentsCount))
 	if err != nil {
 		return nil, nil, err
 	}
 
 	p.MediaType = m3u8.VOD
 
-	for num := 1; num <= segmentNum; num++ {
-		err := p.Append(fmt.Sprintf("%d.ts", num), 10, "")
+	for _, segment := range segments {
+		err := p.Append(fmt.Sprintf("%d.ts", segment.Num), segment.Duration, "")
 		if err != nil {
 			return nil, nil, err
 		}

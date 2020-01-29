@@ -1,6 +1,7 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
 	"strconv"
 
@@ -24,10 +25,30 @@ func NewDatastore(cli *redis.Client) (*Datastore, error) {
 	return ds, nil
 }
 
-func (ds *Datastore) AddSegment(streamID string, segmentNum int) error {
+func (ds *Datastore) AddSegment(streamID string, segmentNum int, duration float64) error {
 	k := makePlaylistSegmentsKey(streamID)
-	err := ds.cli.SAdd(k, segmentNum).Err()
+	segment := &Segment{Num: segmentNum, Duration: duration}
+	segmentJSON, err := json.Marshal(segment)
+	if err != nil {
+		return err
+	}
+	err = ds.cli.SAdd(k, string(segmentJSON)).Err()
 	return err
+}
+
+func (ds *Datastore) GetSegments(streamID string) ([]*Segment, error) {
+	k := makePlaylistSegmentsKey(streamID)
+	segments := []*Segment{}
+	segmentsJSON, err := ds.cli.SMembers(k).Result()
+	for _, segmentJSON := range segmentsJSON {
+		segment := &Segment{}
+		err := json.Unmarshal([]byte(segmentJSON), segment)
+		if err != nil {
+			return nil, err
+		}
+		segments = append(segments, segment)
+	}
+	return segments, err
 }
 
 func (ds *Datastore) GetMaxSegment(streamID string) (int, error) {
