@@ -71,11 +71,14 @@ func (e *EventBus) EmitUpdateStreamStatus(ctx context.Context, id string, status
 	if span != nil {
 		ext.SpanKindRPCServer.Set(span)
 		ext.Component.Set(span, "syncer")
-		span.Tracer().Inject(
+		err := span.Tracer().Inject(
 			span.Context(),
 			opentracing.TextMap,
 			mqmux.RMQHeaderCarrier(headers),
 		)
+		if err != nil {
+			e.logger.Errorf("failed to span inject: %s", err)
+		}
 	}
 
 	event := &privatev1.Event{

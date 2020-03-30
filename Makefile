@@ -15,9 +15,19 @@ default: build
 version:
 	@echo ${VERSION}
 
+lint: docker-lint
+
+docker-lint:
+	docker run --rm \
+		-v `PWD`:/go/src/github.com/videocoin/cloud-sync \
+		-w /go/src/github.com/videocoin/cloud-sync \
+		golangci/golangci-lint:v1.23.6 \
+		golangci-lint run -v
+
 build:
 	GOOS=${GOOS} GOARCH=${GOARCH} \
 		go build \
+			-mod vendor \
 			-ldflags="-w -s -X main.Version=${VERSION}" \
 			-o bin/${NAME} \
 			./cmd/main.go

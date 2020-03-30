@@ -7,9 +7,9 @@ import (
 
 type Service struct {
 	cfg        *Config
-	rpc        *RpcServer
+	rpc        *RPCServer
 	eb         *eventbus.EventBus
-	httpServer *HttpServer
+	httpServer *HTTPServer
 }
 
 func NewService(cfg *Config) (*Service, error) {
@@ -39,7 +39,7 @@ func NewService(cfg *Config) (*Service, error) {
 		return nil, err
 	}
 
-	rpcOptions := &RpcServerOptions{
+	rpcOptions := &RPCServerOptions{
 		Addr:   cfg.RPCAddr,
 		Logger: cfg.Logger,
 		DS:     ds,
@@ -47,19 +47,19 @@ func NewService(cfg *Config) (*Service, error) {
 		Bucket: cfg.Bucket,
 	}
 
-	rpc, err := NewRpcServer(rpcOptions)
+	rpc, err := NewRPCServer(rpcOptions)
 	if err != nil {
 		return nil, err
 	}
 
-	httpServerOpts := &HttpServerOptions{
+	httpServerOpts := &HTTPServerOptions{
 		Addr:   cfg.HTTPAddr,
 		Logger: cfg.Logger.WithField("system", "http-server"),
 		Bucket: cfg.Bucket,
 		DS:     ds,
 		EB:     eb,
 	}
-	hs, err := NewHttpServer(httpServerOpts)
+	hs, err := NewHTTPServer(httpServerOpts)
 	if err != nil {
 		return nil, err
 	}
@@ -74,15 +74,20 @@ func NewService(cfg *Config) (*Service, error) {
 	return svc, nil
 }
 
-func (s *Service) Start() error {
-	go s.rpc.Start()
-	go s.eb.Start()
-	go s.httpServer.Start()
+func (s *Service) Start(errCh chan error) {
+	go func() {
+		errCh <- s.rpc.Start()
+	}()
 
-	return nil
+	go func() {
+		errCh <- s.eb.Start()
+	}()
+
+	go func() {
+		errCh <- s.httpServer.Start()
+	}()
 }
 
 func (s *Service) Stop() error {
-	s.eb.Stop()
-	return nil
+	return s.eb.Stop()
 }

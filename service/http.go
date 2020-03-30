@@ -19,7 +19,12 @@ import (
 	"github.com/videocoin/cloud-sync/eventbus"
 )
 
-type HttpServerOptions struct {
+const (
+	noCache      = "no-cache"
+	mimeTypeM3U8 = "application/x-mpegURL"
+)
+
+type HTTPServerOptions struct {
 	Addr   string
 	Bucket string
 	Logger *logrus.Entry
@@ -27,7 +32,7 @@ type HttpServerOptions struct {
 	EB     *eventbus.EventBus
 }
 
-type HttpServer struct {
+type HTTPServer struct {
 	logger *logrus.Entry
 	e      *echo.Echo
 	addr   string
@@ -38,7 +43,7 @@ type HttpServer struct {
 	bh     *storage.BucketHandle
 }
 
-func NewHttpServer(opts *HttpServerOptions) (*HttpServer, error) {
+func NewHTTPServer(opts *HTTPServerOptions) (*HTTPServer, error) {
 	gscli, err := storage.NewClient(context.Background())
 	if err != nil {
 		return nil, err
@@ -50,7 +55,7 @@ func NewHttpServer(opts *HttpServerOptions) (*HttpServer, error) {
 		return nil, err
 	}
 
-	return &HttpServer{
+	return &HTTPServer{
 		logger: opts.Logger,
 		e:      echo.New(),
 		gscli:  gscli,
@@ -62,7 +67,7 @@ func NewHttpServer(opts *HttpServerOptions) (*HttpServer, error) {
 	}, nil
 }
 
-func (hs *HttpServer) Start() error {
+func (hs *HTTPServer) Start() error {
 	hs.e.Use(logrusext.Hook())
 	hs.e.Use(middleware.Recover())
 	hs.e.HideBanner = true
@@ -78,7 +83,7 @@ func (hs *HttpServer) Start() error {
 	return hs.e.Start(hs.addr)
 }
 
-func (hs *HttpServer) upload(c echo.Context) error {
+func (hs *HTTPServer) upload(c echo.Context) error {
 	path := c.FormValue("path")
 	ct := c.FormValue("ct")
 	vod := c.FormValue("vod")
@@ -166,7 +171,7 @@ func (hs *HttpServer) upload(c echo.Context) error {
 	return c.NoContent(http.StatusAccepted)
 }
 
-func (hs *HttpServer) uploadSegment(ctx context.Context, streamID string, segmentNum int, ct string, src multipart.File) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
+func (hs *HTTPServer) uploadSegment(ctx context.Context, streamID string, segmentNum int, ct string, src multipart.File) (*storage.ObjectHandle, *storage.ObjectAttrs, error) {
 	objectName := fmt.Sprintf("%s/%d.ts", streamID, segmentNum)
 
 	logger := hs.logger.WithFields(logrus.Fields{
@@ -178,10 +183,9 @@ func (hs *HttpServer) uploadSegment(ctx context.Context, streamID string, segmen
 
 	logger.Info("uploading segment")
 
-	emptyCtx := context.Background()
 	obj := hs.bh.Object(objectName)
-	w := obj.NewWriter(emptyCtx)
-	w.CacheControl = "no-cache"
+	w := obj.NewWriter(ctx)
+	w.CacheControl = noCache
 	w.ContentType = ct
 
 	if _, err := io.Copy(w, src); err != nil {
@@ -192,11 +196,11 @@ func (hs *HttpServer) uploadSegment(ctx context.Context, streamID string, segmen
 		return nil, nil, err
 	}
 
-	if err := obj.ACL().Set(emptyCtx, storage.AllUsers, storage.RoleReader); err != nil {
+	if err := obj.ACL().Set(ctx, storage.AllUsers, storage.RoleReader); err != nil {
 		return nil, nil, err
 	}
 
-	attrs, err := obj.Attrs(emptyCtx)
+	attrs, err := obj.Attrs(ctx)
 	if err != nil {
 		return obj, attrs, err
 	}
@@ -206,7 +210,7 @@ func (hs *HttpServer) uploadSegment(ctx context.Context, streamID string, segmen
 	return obj, attrs, err
 }
 
-func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(
+func (hs *HTTPServer) generateAndUploadLiveMasterPlaylist(
 	ctx context.Context,
 	streamID string,
 	segments []*Segment,
@@ -252,8 +256,8 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(
 	obj := hs.bh.Object(tmpObjectName)
 
 	w := obj.NewWriter(ctx)
-	w.CacheControl = "no-cache"
-	w.ContentType = "application/x-mpegURL"
+	w.CacheControl = noCache
+	w.ContentType = mimeTypeM3U8
 
 	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
 		return nil, nil, err
@@ -271,12 +275,12 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(
 
 	copier := dst.CopierFrom(obj)
 	copier.ACL = []storage.ACLRule{
-		storage.ACLRule{
+		{
 			Entity: storage.AllUsers,
 			Role:   storage.RoleReader,
 		},
 	}
-	copier.ContentType = "application/x-mpegURL"
+	copier.ContentType = mimeTypeM3U8
 	copier.CacheControl = "private, max-age=0, no-transform"
 
 	_, err = copier.Run(context.Background())
@@ -294,7 +298,7 @@ func (hs *HttpServer) generateAndUploadLiveMasterPlaylist(
 	return obj, attrs, err
 }
 
-func (hs *HttpServer) generateAndUploadVODMasterPlaylist(
+func (hs *HTTPServer) generateAndUploadVODMasterPlaylist(
 	ctx context.Context,
 	streamID string,
 	segments []*Segment,
@@ -334,8 +338,8 @@ func (hs *HttpServer) generateAndUploadVODMasterPlaylist(
 	obj := hs.bh.Object(tmpObjectName)
 
 	w := obj.NewWriter(ctx)
-	w.CacheControl = "no-cache"
-	w.ContentType = "application/x-mpegURL"
+	w.CacheControl = noCache
+	w.ContentType = mimeTypeM3U8
 
 	if _, err := io.Copy(w, bytes.NewReader(data)); err != nil {
 		return nil, nil, err
@@ -353,12 +357,12 @@ func (hs *HttpServer) generateAndUploadVODMasterPlaylist(
 
 	copier := dst.CopierFrom(obj)
 	copier.ACL = []storage.ACLRule{
-		storage.ACLRule{
+		{
 			Entity: storage.AllUsers,
 			Role:   storage.RoleReader,
 		},
 	}
-	copier.ContentType = "application/x-mpegURL"
+	copier.ContentType = mimeTypeM3U8
 	copier.CacheControl = "private, max-age=0, no-transform"
 
 	_, err = copier.Run(context.Background())
