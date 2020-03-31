@@ -19,11 +19,7 @@ lint:
 	golangci-lint run -v --timeout 120s
 
 docker-lint:
-	docker run --rm \
-		-v `PWD`:/go/src/github.com/videocoin/cloud-sync \
-		-w /go/src/github.com/videocoin/cloud-sync \
-		golangci/golangci-lint:v1.23.6 \
-		golangci-lint run -v --timeout 120s
+	docker build -f Dockerfile.lint .
 
 build:
 	GOOS=${GOOS} GOARCH=${GOARCH} \
