@@ -31,7 +31,6 @@ func NewService(cfg *Config) (*Service, error) {
 	ebConfig := &eventbus.Config{
 		URI:    cfg.MQURI,
 		Name:   cfg.Name,
-		Logger: cfg.Logger.WithField("system", "eventbus"),
 		Bucket: cfg.Bucket,
 	}
 	eb, err := eventbus.New(ebConfig)
