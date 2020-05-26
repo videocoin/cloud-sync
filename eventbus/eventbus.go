@@ -18,6 +18,7 @@ import (
 )
 
 type Config struct {
+	Logger *logrus.Entry
 	URI    string
 	Name   string
 	Bucket string
@@ -36,6 +37,7 @@ func New(c *Config) (*EventBus, error) {
 	}
 
 	return &EventBus{
+		logger: c.Logger,
 		mq:     mq,
 		bucket: c.Bucket,
 	}, nil

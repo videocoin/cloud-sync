@@ -3,7 +3,7 @@ WORKDIR /go/src/github.com/videocoin/cloud-sync
 COPY . .
 RUN make build
 
-FROM bitnami/minideb:jessie
+FROM bitnami/minideb:stretch
 
 RUN apt-get update
 RUN apt-get install -y ca-certificates curl
