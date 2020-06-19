@@ -16,21 +16,32 @@ spec:
       name: {{ .Release.Name }}
       labels:
         app: {{ .Release.Name }}
+    {{- with .Values.annotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
     spec:
+    {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      automountServiceAccountToken: true
       containers:
         - name: {{ .Release.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["bash", "-c", "source /vault/secrets/common && source /vault/secrets/config && /syncer"]
           ports:
-            - containerPort: {{ .Values.service.internalRpcPort }}
-            - containerPort: {{ .Values.service.internalHttpPort }}
+            - containerPort: {{ .Values.service.ports.grpc }}
+            - containerPort: {{ .Values.service.ports.http }}
           readinessProbe:
             exec:
-              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.service.internalRpcPort }}"]
+              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.service.ports.grpc }}"]
             initialDelaySeconds: 5
           livenessProbe:
             exec:
-              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.service.internalRpcPort }}"]
+              command: ["/bin/grpc_health_probe", "-addr=:{{ .Values.service.ports.grpc }}"]
             initialDelaySeconds: 10
           env:
             - name: JAEGER_AGENT_HOST
@@ -39,28 +50,6 @@ spec:
                   fieldPath: status.hostIP
             - name: JAEGER_AGENT_PORT
               value: "6831"
-            - name: RPC_ADDR
-              value: 0.0.0.0:{{ .Values.service.internalRpcPort }}
-            - name: BUCKET
-              valueFrom:
-                configMapKeyRef:
-                  name: {{ .Chart.Name }}
-                  key: bucket
-            - name: MQURI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Chart.Name }}
-                  key: mqUri
-            - name: DBURI
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Chart.Name }}
-                  key: dbUri
-            - name: SENTRY_DSN
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Chart.Name }}
-                  key: sentryDsn
           {{- if .Values.resources }}
           resources:
 {{ toYaml .Values.resources | indent 12 }}
@@ -69,8 +58,7 @@ spec:
         - name: config
           configMap:
             name: {{ .Release.Name }}
-        - name: secrets
-          secret:
-            secretName: {{ .Release.Name }}
+    {{- with .Values.nodeSelector }}
       nodeSelector:
-        cloud.google.com/gke-nodepool: api
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
