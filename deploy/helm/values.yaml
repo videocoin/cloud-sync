@@ -32,14 +32,6 @@ autoscaler:
   targets:
     targetCPUUtilizationPercentage: 70
 
-ingress:
-  enabled: true
-  host: syncer.dev.videocoinapis.com
-  annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-dns-prod
-    kubernetes.io/ingress.class: nginx
-  secret: tls-cert-console-syncer
-
 annotations:
   vault.hashicorp.com/agent-inject: "true"
   vault.hashicorp.com/role: "console-uploader"
